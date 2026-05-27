@@ -1,20 +1,15 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token
 from werkzeug.security import check_password_hash
-from flask_cors import cross_origin  # <-- Nova importação
-from app.models import Usuario
+from app.models.usuario import Usuario
 import datetime
 
+# Equivalente ao [Route("api/[controller]")]
 auth_bp = Blueprint('auth', __name__)
 
-# Adicionamos o 'OPTIONS' para o navegador conseguir fazer o preflight
-@auth_bp.route('/api/usuario/login', methods=['POST', 'OPTIONS'])
-@cross_origin() # <-- Força o CORS especificamente nesta rota
+# Equivalente ao [HttpPost("login")]
+@auth_bp.route('/api/usuario/login', methods=['POST'])
 def login():
-    # Na força bruta: Se for a requisição de segurança do navegador, responde OK
-    if request.method == 'OPTIONS':
-        return jsonify({"status": "ok"}), 200
-
     dados = request.get_json()
     
     if not dados:
@@ -23,14 +18,18 @@ def login():
     email = dados.get('email')
     senha = dados.get('senha')
 
+    # Busca o usuário pelo email
     usuario = Usuario.query.filter_by(email=email).first()
 
+    # Validação segura (equivalente ao u.Senha == login.Senha, mas com hash)
     if not usuario or not check_password_hash(usuario.senha, senha):
         return jsonify({"message": "E-mail ou senha incorretos."}), 401
 
+    # Equivalente ao if (user.Status != "Ativo")
     if not usuario.is_active:
         return jsonify({"message": "Este usuário está inativo."}), 401
 
+    # Equivalente ao GerarTokenJwt()
     expires = datetime.timedelta(hours=8)
     token = create_access_token(
         identity=str(usuario.id),
@@ -56,14 +55,14 @@ def login():
         }
     }), 200
 
-@auth_bp.route('/api/usuario/logout/<int:id>', methods=['POST', 'OPTIONS'])
-@cross_origin()
+# Equivalente ao [HttpPost("logout/{id}")]
+@auth_bp.route('/api/usuario/logout/<int:id>', methods=['POST'])
 def logout(id):
-    if request.method == 'OPTIONS':
-        return jsonify({"status": "ok"}), 200
-        
     usuario = Usuario.query.get(id)
+    
     if not usuario:
         return jsonify({"message": "Usuário não encontrado."}), 404
 
+    # Num sistema JWT (Stateless), o logout real é feito no Frontend apagando o Token do navegador.
+    # Esta rota foi mantida para replicar o comportamento exato do teu código C#.
     return jsonify({"message": f"{usuario.nome} saiu do sistema com sucesso."}), 200
