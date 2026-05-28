@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recebi - Painel do Síndico</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans flex h-screen overflow-hidden">
+    
+    <aside class="w-64 bg-[#f3f3f3] border-r border-slate-200 flex flex-col shadow-md z-10">
+        <div class="p-6 flex items-center mb-5 border-b border-slate-200">
+            <img src="../imagens/logo.png" alt="Logo" class="w-8 h-auto mr-3">
+            <span class="text-xl font-bold text-[#333]">Recebi</span>
+        </div>
+        
+        <nav class="flex-1 px-4 space-y-2 mt-2">
+            <button id="menu-usuarios" class="w-full text-left px-4 py-3 rounded-md bg-[#4a90e2] text-white font-medium transition-colors">
+                Gestão de Usuários
+            </button>
+            <button id="menu-logs" class="w-full text-left px-4 py-3 rounded-md text-slate-600 hover:bg-slate-200 font-medium transition-colors">
+                Logs de Auditoria
+            </button>
+        </nav>
+        
+        <div class="p-6 border-t border-slate-200 bg-white">
+            <p id="user-name" class="text-sm font-bold text-slate-700 mb-1 truncate"></p>
+            <p class="text-xs text-slate-500 mb-4">Síndico</p>
+            <button id="btn-logout" class="w-full py-2 text-sm text-red-600 border border-red-200 rounded-md hover:bg-red-50 transition-colors">
+                Sair do Sistema
+            </button>
+        </div>
+    </aside>
+
+    <main class="flex-1 p-8 overflow-y-auto" id="main-content">
+        <div class="flex justify-between items-center mb-8">
+            <h2 id="titulo-pagina" class="text-2xl font-bold text-[#333]">Usuários do Sistema</h2>
+            <button id="btn-novo-usuario" class="bg-[#4a90e2] text-white px-4 py-2 rounded-md shadow hover:bg-[#357abd] transition-colors text-sm font-medium">
+                + Novo Usuário
+            </button>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+            <div id="tabela-container" class="w-full overflow-x-auto">
+                <p class="text-center text-slate-500 py-8">Carregando dados...</p>
+            </div>
+        </div>
+    </main>
+
+    <script src="../shared/api.js"></script>
+    <script src="sindico.js"></script>
+</body>
+</html>

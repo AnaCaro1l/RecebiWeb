@@ -242,7 +242,7 @@ def consultar_logs():
             encomenda_descricao = "Sem referência"
             encomenda_apartamento = "Sem apartamento"
             
-            if h.tabela_afetada == 'encomendas':
+            if h.tabela_afetada == 'encomendas' and h.registro_id != 0:
                 encomenda = db.session.get(Encomenda, h.registro_id)
                 if encomenda:
                     encomenda_descricao = encomenda.descricao
