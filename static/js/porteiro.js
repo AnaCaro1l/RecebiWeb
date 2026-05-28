@@ -154,33 +154,87 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 5. CARREGAR TABELA DE ENCOMENDAS (ABA LISTA)
+    let paginaAtual = 1;
+    const filtroData = document.getElementById('filtro-data');
+    const filtroStatus = document.getElementById('filtro-status');
+    const btnLimpar = document.getElementById('btn-limpar-filtros');
+    const btnAnterior = document.getElementById('btn-pag-anterior');
+    const btnProximo = document.getElementById('btn-pag-proximo');
+    const textoPaginas = document.getElementById('texto-paginas');
+
+    // Escutadores para atualizar a listagem ao mudar os filtros
+    filtroData.addEventListener('change', () => { paginaAtual = 1; carregarEncomendas(); });
+    filtroStatus.addEventListener('change', () => { paginaAtual = 1; carregarEncomendas(); });
+    
+    btnLimpar.addEventListener('click', () => {
+        filtroData.value = '';
+        filtroStatus.value = '';
+        paginaAtual = 1;
+        carregarEncomendas();
+    });
+
+    // Escutadores dos botões de paginação
+    btnAnterior.addEventListener('click', () => {
+        if (paginaAtual > 1) {
+            paginaAtual--;
+            carregarEncomendas();
+        }
+    });
+
+    btnProximo.addEventListener('click', () => {
+        paginaAtual++;
+        carregarEncomendas();
+    });
+
     async function carregarEncomendas() {
         tabelaContainer.innerHTML = '<p class="text-center text-slate-500 py-8">Carregando encomendas...</p>';
+        
+        const dataVal = filtroData.value;
+        const statusVal = filtroStatus.value;
+        
+        // Monta a URL passando página e parâmetros de busca para a API
+        const url = `${API_BASE_URL}/porteiro/encomendas?page=${paginaAtual}&status=${statusVal}&data=${dataVal}`;
+
         try {
-            const response = await fetch(`${API_BASE_URL}/porteiro/encomendas`, {
+            const response = await fetch(url, {
                 headers: { 'Authorization': `Bearer ${Auth.getToken()}` }
             });
             const dados = await response.json();
             
             if (!response.ok) throw new Error(dados.message || 'Erro ao carregar dados');
 
-            if (dados.message) {
-                tabelaContainer.innerHTML = `<p class="text-center text-slate-500 py-8">${dados.message}</p>`;
+            if (!dados.encomendas || dados.encomendas.length === 0) {
+                tabelaContainer.innerHTML = `<p class="text-center text-slate-500 py-8">Nenhuma encomenda encontrada para os filtros aplicados.</p>`;
+                atualizarControlesPagiracao(0, 1, false, false);
                 return;
             }
 
-            renderizarTabelaEncomendas(dados);
+            renderizarTabelaEncomendas(dados.encomendas);
+            atualizarControlesPagiracao(
+                dados.paginacao.pagina_atual, 
+                dados.paginacao.total_paginas, 
+                dados.paginacao.tem_anterior, 
+                dados.paginacao.tem_proximo
+            );
+
         } catch (error) {
             tabelaContainer.innerHTML = `<p class="text-center text-red-500 py-8">${error.message}</p>`;
         }
     }
 
+    function atualizarControlesPagiracao(atual, total, temAnterior, temProximo) {
+        paginaAtual = atual;
+        textoPaginas.textContent = `Página ${total === 0 ? 0 : atual} de ${total}`;
+        btnAnterior.disabled = !temAnterior;
+        btnProximo.disabled = !temProximo;
+    }
+
     function renderizarTabelaEncomendas(encomendas) {
         let html = `
-            <table class="w-full text-sm text-left text-slate-500">
+            <table class="w-full text-sm text-left text-slate-500 border-collapse">
                 <thead class="text-xs text-slate-700 uppercase bg-slate-100 border-b border-slate-200">
                     <tr>
-                        <th class="px-6 py-3">Apt</th>
+                        <th class="px-4 py-3 w-10"></th> <th class="px-6 py-3">Apt</th>
                         <th class="px-6 py-3">Morador</th>
                         <th class="px-6 py-3">Descrição</th>
                         <th class="px-6 py-3">Status</th>
@@ -192,24 +246,63 @@ document.addEventListener('DOMContentLoaded', () => {
 
         encomendas.forEach(e => {
             const statusClass = e.Status === 'Pendente' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800';
-            const dataFormatada = new Date(e.DataEntrada).toLocaleString('pt-BR');
+            const dataIn = e.DataEntrada ? new Date(e.DataEntrada).toLocaleString('pt-BR') : 'N/A';
+            const dataOut = e.DataRetirada ? new Date(e.DataRetirada).toLocaleString('pt-BR') : 'Ainda não retirada';
+
             html += `
-                <tr class="bg-white border-b hover:bg-slate-50">
+                <tr class="bg-white border-b hover:bg-slate-50 transition-colors cursor-pointer linha-registro" data-id="${e.IdEncomenda}">
+                    <td class="px-4 py-4 text-center">
+                        <span class="inline-block transform transition-transform duration-200 seta-icone text-xs text-slate-400" id="seta-${e.IdEncomenda}">▶</span>
+                    </td>
                     <td class="px-6 py-4 font-bold text-slate-900">${e.Apartamento || 'N/A'}</td>
                     <td class="px-6 py-4">${e.Morador}</td>
                     <td class="px-6 py-4">
-                        ${e.Descricao}
-                        ${e.CodigoRastreio ? `<br><span class="text-xs text-slate-400">Rastreio: ${e.CodigoRastreio}</span>` : ''}
+                        <span class="font-medium text-slate-700">${e.Descricao}</span>
+                        ${e.CodigoRastreio ? `<br><span class="text-xs text-slate-400 font-mono bg-slate-100 px-1 py-0.5 rounded">Rastreio: ${e.CodigoRastreio}</span>` : ''}
                     </td>
                     <td class="px-6 py-4">
-                        <span class="px-2.5 py-0.5 rounded text-xs font-medium ${statusClass}">${e.Status}</span>
+                        <span class="px-2.5 py-0.5 rounded text-xs font-semibold ${statusClass}">${e.Status}</span>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap">${dataFormatada}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${dataIn}</td>
+                </tr>
+                
+                <tr id="detalhe-${e.IdEncomenda}" class="hidden bg-slate-50/50 border-b border-slate-200">
+                    <td colspan="6" class="px-12 py-4 text-slate-600 bg-slate-50/70">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-l-2 border-slate-300 pl-4 py-1 text-xs">
+                            <div>
+                                <p class="text-slate-400 font-medium uppercase tracking-wider mb-0.5">Porteiro Responsável pelo Recebimento</p>
+                                <p class="text-sm font-semibold text-slate-700">${e.Porteiro || 'Não registrado'}</p>
+                            </div>
+                            <div>
+                                <p class="text-slate-400 font-medium uppercase tracking-wider mb-0.5">Data/Hora da Retirada pelo Morador</p>
+                                <p class="text-sm font-semibold text-slate-700">${dataOut}</p>
+                            </div>
+                        </div>
+                    </td>
                 </tr>
             `;
         });
 
         html += '</tbody></table>';
         tabelaContainer.innerHTML = html;
+
+        // Adiciona evento de clique para expandir/recolher a cascata ao clicar em qualquer lugar da linha
+        document.querySelectorAll('.linha-registro').forEach(linha => {
+            linha.addEventListener('click', () => {
+                const id = linha.getAttribute('data-id');
+                const linhaDetalhe = document.getElementById(`detalhe-${id}`);
+                const seta = document.getElementById(`seta-${id}`);
+                
+                if (linhaDetalhe.classList.contains('hidden')) {
+                    linhaDetalhe.classList.remove('hidden');
+                    seta.style.transform = 'rotate(90deg)'; // Gira a seta para baixo
+                } else {
+                    linhaDetalhe.classList.add('hidden');
+                    seta.style.transform = 'rotate(0deg)';  // Reseta a seta para frente
+                }
+            });
+        });
     }
+    menuLista.click();
+
 });
