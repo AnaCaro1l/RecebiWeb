@@ -1,0 +1,14 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Recebi - Painel do Morador{% endblock %}
+
+{% block body %}
+<div class="h-screen flex items-center justify-center bg-slate-100">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md text-center animate-fade-in">
+        <h1 class="text-2xl font-bold text-slate-800 mb-4">Painel do Morador</h1>
+        <p class="text-slate-600 mb-6">Em breve: Gerencie suas encomendas e recebimentos aqui.</p>
+        <button onclick="Auth.logout()" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition">Sair</button>
+    </div>
+</div>
+<script src="{{ url_for('static', filename='js/api.js') }}"></script>
+{% endblock %}
