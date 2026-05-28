@@ -126,7 +126,7 @@ Ou diretamente:
 pytest
 ```
 
-## Equipe (CC3N - UVV)
+## Equipe (CC5N - UVV)
 
 * Ana Carollina Silva Dias Ferreira
 * Lucas Cunha Missagia
