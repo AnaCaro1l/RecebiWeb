@@ -8,11 +8,11 @@ version = "0.2.0"
 description = "Gerenciador de encomendas."
 readme = "README.md"
 requires-python = ">=3.11"
-license = {text = "MIT"}
+license = {file = "LICENSE"}
 authors = [
-    {name = "Ana Carollina Silva Dias Ferreira"},
-    {name = "Lucas Cunha Missagia"},
-    {name = "Pedro Quinellato Dutra Vieira"},
+    {name = "Pedro Quinellato", email = "pedroqdvieira88123@gmail.com"},
+    {name = "Ana Carollina", email = "sla@gmail.com"},
+    {name = "Lucas", email = "sla2@gmail.com"},
 ]
 
 dependencies = [
@@ -33,7 +33,6 @@ dependencies = [
     "SQLAlchemy==2.0.49",
     "typing_extensions==4.15.0",
     "Werkzeug==3.1.8",
-    "invoke",
 ]
 
 [tool.recebi]
