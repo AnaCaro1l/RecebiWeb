@@ -69,7 +69,7 @@ def create_env_files():
 
 if __name__ == "__main__":
     create_env_files()
-
+    
     print("\\nExecuting database setup tasks...")
     os.system("python tasks.py init-db")
     os.system("python tasks.py create-sindico")
