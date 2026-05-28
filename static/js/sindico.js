@@ -48,10 +48,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function mudarAbaAtiva(abaAtiva, abaInativa) {
-        abaAtiva.classList.add('bg-indigo-600', 'text-white');
-        abaAtiva.classList.remove('text-slate-300', 'hover:bg-slate-800');
-        abaInativa.classList.remove('bg-indigo-600', 'text-white');
-        abaInativa.classList.add('text-slate-300', 'hover:bg-slate-800');
+        abaAtiva.classList.add('bg-[#4a90e2]', 'text-white');
+        abaAtiva.classList.remove('text-slate-600', 'hover:bg-slate-200');
+        abaInativa.classList.remove('bg-[#4a90e2]', 'text-white');
+        abaInativa.classList.add('text-slate-600', 'hover:bg-slate-200');
     }
 
     // --- 4. API CALLS ---
