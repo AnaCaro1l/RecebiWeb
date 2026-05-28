@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const usuario = Auth.getUsuario();
     const userNameEl = document.getElementById('user-name');
     if (userNameEl) {
-        userNameEl.textContent = `👤 ${usuario.Nome}`;
+        userNameEl.textContent = `${usuario.Nome}`;
     }
 
     // --- 2. LOGOUT ---
@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
             const data = await response.json();
-            
+
             if (!response.ok) throw new Error(data.message || 'Erro ao carregar usuários.');
 
             if (!Array.isArray(data) || data.length === 0) {
@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
 
             data.forEach(u => {
-                const statusBadge = u.Status === 'Ativo' 
+                const statusBadge = u.Status === 'Ativo'
                     ? '<span class="px-2 py-1 text-xs font-semibold text-emerald-800 bg-emerald-100 rounded-full">Ativo</span>'
                     : '<span class="px-2 py-1 text-xs font-semibold text-rose-800 bg-rose-100 rounded-full">Inativo</span>';
 
@@ -267,7 +267,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 apartamento: document.getElementById('modal-apartamento').value.trim() || null
             };
 
-            const url = id 
+            const url = id
                 ? `${API_BASE_URL}/sindico/atualizar/${id}`
                 : `${API_BASE_URL}/sindico/criar`;
 
