@@ -1,0 +1,63 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Recebi - Login{% endblock %}
+
+{% block head %}
+<style>
+    body {
+        background-image: url('{{ url_for("static", filename="images/drones.png") }}') !important;
+        background-repeat: no-repeat !important;
+        background-position: center !important;
+        background-size: cover !important;
+        background-attachment: fixed !important;
+        background-color: transparent !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        min-height: 100vh !important;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="bg-[#f3f3f3] py-10 px-[30px] rounded-lg shadow-[0_4px_15px_rgba(0,0,0,0.2)] w-[320px] text-center">
+
+    <div class="flex items-center justify-center mb-5">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo Recebi"
+            class="w-[70px] h-auto mr-[10px]">
+        <span class="text-2xl font-bold text-[#333]">Recebi</span>
+    </div>
+
+    <form id="login-form" class="flex flex-col items-center">
+
+        <input type="email" id="email" placeholder="Email" required
+            class="w-full p-2.5 my-2 border border-[#ccc] rounded-md text-sm outline-none focus:border-[#4a90e2] focus:ring-1 focus:ring-[#4a90e2] transition-colors">
+
+        <input type="password" id="senha" placeholder="Senha" required
+            class="w-full p-2.5 my-2 border border-[#ccc] rounded-md text-sm outline-none focus:border-[#4a90e2] focus:ring-1 focus:ring-[#4a90e2] transition-colors">
+
+        <a href="#" id="forgot-password" class="block mt-2.5 text-xs text-[#4a90e2] no-underline hover:underline">
+            Esqueceu a senha?
+        </a>
+
+        <button type="submit" id="btn-login"
+            class="w-full p-2.5 mt-3 bg-[#4a90e2] text-white border-none rounded-md text-base cursor-pointer transition-colors duration-300 ease-in-out hover:bg-[#357abd]">
+            Entrar
+        </button>
+    </form>
+
+    <div id="error-message"
+        class="hidden mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded text-sm text-center">
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/api.js') }}"></script>
+<script src="{{ url_for('static', filename='js/login.js') }}"></script>
+
+<script>
+    document.getElementById('forgot-password').addEventListener('click', function (e) {
+        e.preventDefault();
+        alert('Entre em contato com o administrador ou síndico para redefinir sua senha.');
+    }); 
+</script>
+{% endblock %}

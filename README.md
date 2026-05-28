@@ -61,23 +61,32 @@ Siga os passos abaixo para configurar o ambiente de desenvolvimento local:
      ```
 
 4. Instalar as dependências:
-   Você pode instalar usando o arquivo `requirements.txt`:
-   ```bash
-   pip install -r requirements.txt
-   ```
-   Ou de forma editável através do `pyproject.toml` (incluindo as dependências de desenvolvimento e testes):
+   Instale as dependências através do `pyproject.toml`:
    ```bash
    pip install -e ".[dev,test]"
    ```
+   Isso instala todas as dependências do projeto, incluindo ferramentas de desenvolvimento e teste.
 
 5. Configurar as Variáveis de Ambiente:
-   O projeto possui um script facilitador para criar os arquivos de ambiente local (`.env.dev`, `.env.test`, `.env.prod`) e configurar a aplicação padrão:
+
+   **Opção 1 (Recomendada): Usar o script make_env.py**
+   
+   O projeto possui um script facilitador que cria automaticamente os arquivos de ambiente (`.env.dev`, `.env.test`, `.env.prod`) e configura a aplicação padrão:
    ```bash
    python make_env.py
    ```
-   Esse script criará o arquivo `.env` principal apontando por padrão para o ambiente de desenvolvimento local em SQLite.
+   Este script criará o arquivo `.env` principal apontando por padrão para o ambiente de desenvolvimento local em SQLite. É a forma mais simples e segura de configurar o projeto.
    
-   Caso queira utilizar o MySQL, altere as variáveis correspondentes no arquivo `.env` gerado:
+   **Opção 2: Configuração Manual**
+   
+   Se preferir configurar manualmente, crie um arquivo `.env` na raiz do projeto com as seguintes variáveis:
+   ```env
+   FLASK_ENV=development
+   DATABASE_URI=sqlite:///instance/recebi.db
+   JWT_SECRET_KEY=sua_chave_secreta_aqui
+   ```
+   
+   Para utilizar o MySQL em vez de SQLite, altere a variável `DATABASE_URI`:
    ```env
    DATABASE_URI=mysql+pymysql://usuario:senha@localhost/recebi_db
    JWT_SECRET_KEY=sua_chave_secreta_aqui

@@ -2,6 +2,11 @@ from flask import Blueprint, render_template
 
 site_bp = Blueprint('site', __name__)
 
+@site_bp.route('/login.html')
+@site_bp.route('/login')
+def login():
+    return render_template('main/login.html')
+
 @site_bp.route('/')
 @site_bp.route('/index.html')
 def index():
