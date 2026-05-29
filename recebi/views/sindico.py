@@ -22,8 +22,6 @@ def registrar_historico(id_usuario, acao, tipo, registro_id=None, detalhes=None)
     db.session.add(log)
     db.session.commit()
 
-# --- CRUD DE USUÁRIOS ---
-
 @sindico_bp.route('/api/sindico/criar', methods=['POST'])
 @jwt_required()
 def criar_usuario():
@@ -169,7 +167,6 @@ def listar_usuarios():
     if claims.get("perfil") != "Sindico":
         return jsonify({"erro": "Acesso negado."}), 403
 
-    # Captura os filtros e a página atual enviados pelo JavaScript
     pagina = request.args.get('page', 1, type=int)
     nome_query = request.args.get('nome', '').strip()
     apt_query = request.args.get('apt', '').strip()
@@ -191,10 +188,8 @@ def listar_usuarios():
         elif status_query.lower() == "inativo":
             query = query.filter(Usuario.is_active == False)
 
-        # Ordena por nome
         query = query.order_by(Usuario.nome)
 
-        # Aplica a paginação nativa limitando estritamente a 10 itens por página
         paginacao = query.paginate(page=pagina, per_page=10, error_out=False)
         
         resultado = []
@@ -245,7 +240,6 @@ def buscar_usuario_por_id(id):
     except Exception as ex:
         return jsonify({"message": "Erro ao buscar usuário.", "error": str(ex)}), 500
 
-# --- AUDITORIA E LOGS ---
 
 @sindico_bp.route('/api/sindico/logs', methods=['GET'])
 @jwt_required()
@@ -254,7 +248,6 @@ def consultar_logs():
     if claims.get("perfil") != "Sindico":
         return jsonify({"erro": "Acesso negado."}), 403
 
-    # Captura os parâmetros de filtros e paginação enviados pelo JavaScript
     pagina = request.args.get('page', 1, type=int)
     data_param = request.args.get('data', '').strip()
     responsavel_param = request.args.get('responsavel', '').strip()
@@ -272,10 +265,8 @@ def consultar_logs():
         if responsavel_param:
             query = query.filter(Usuario.nome.ilike(f"%{responsavel_param}%"))
 
-        # Ordena sempre pelos logs mais recentes
         query = query.order_by(LogAuditoria.data_acao.desc())
 
-        # Aplica paginação nativa limitando a 10 registros por página
         paginacao = query.paginate(page=pagina, per_page=10, error_out=False)
         resultado = []
 

@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // --- 1. ROUTE PROTECTION ---
     if (!Auth.isAutenticado() || Auth.getUsuario().TipoUsuario.toLowerCase() !== 'sindico') {
         alert('Acesso negado. Esta página é restrita a Síndicos.');
         Auth.logout();
@@ -12,7 +11,6 @@ document.addEventListener('DOMContentLoaded', () => {
         userNameEl.textContent = `${usuario.Nome}`;
     }
 
-    // --- 2. LOGOUT ---
     const btnLogout = document.getElementById('btn-logout');
     if (btnLogout) {
         btnLogout.addEventListener('click', () => {
@@ -20,15 +18,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- 3. TAB NAVIGATION E CONFIGURAÇÃO DE FILTROS ---
     const menuUsuarios = document.getElementById('menu-usuarios');
     const menuLogs = document.getElementById('menu-logs');
     const tituloPagina = document.getElementById('titulo-pagina');
     const btnNovoUsuario = document.getElementById('btn-novo-usuario');
     const tabelaContainer = document.getElementById('tabela-container');
 
-    // Controle de Paginação e Filtros de Usuários (DECLARAÇÃO ÚNICA)
-let paginaAtualUsers = 1;
+    let paginaAtualUsers = 1;
     
     const containerFiltrosUser = document.getElementById('container-filtros-usuarios');
     const filtroUserNome = document.getElementById('filtro-user-nome');
@@ -55,7 +51,6 @@ let paginaAtualUsers = 1;
     const textoPaginasLogs = document.getElementById('texto-paginas-logs');
     const containerPaginacaoLog = document.getElementById('paginacao-logs-container');
 
-    // Máscara de fuso horário rígida para cravar o padrão brasileiro
     const opcoesDataBR = {
         timeZone: 'America/Sao_Paulo',
         day: '2-digit',
@@ -66,7 +61,6 @@ let paginaAtualUsers = 1;
         second: '2-digit'
     };
 
-// === SUBSTITUA O BLOCO 'if (menuUsuarios && menuLogs)' (Linhas 61 a 83) POR ESTE ===
     if (menuUsuarios && menuLogs) {
         menuUsuarios.addEventListener('click', () => {
             currentTab = 'usuarios';
@@ -76,7 +70,7 @@ let paginaAtualUsers = 1;
             if (containerFiltrosUser) containerFiltrosUser.classList.remove('hidden');   
             if (containerPaginacaoUser) containerPaginacaoUser.classList.remove('hidden'); 
             if (containerFiltrosLog) containerFiltrosLog.classList.add('hidden'); 
-            if (containerPaginacaoLog) containerPaginacaoLog.classList.add('hidden'); // Oculta paginação de log
+            if (containerPaginacaoLog) containerPaginacaoLog.classList.add('hidden');
             carregarUsuarios();
         });
 
@@ -88,7 +82,7 @@ let paginaAtualUsers = 1;
             if (containerFiltrosUser) containerFiltrosUser.classList.add('hidden');   
             if (containerPaginacaoUser) containerPaginacaoUser.classList.add('hidden'); 
             if (containerFiltrosLog) containerFiltrosLog.classList.remove('hidden'); 
-            if (containerPaginacaoLog) containerPaginacaoLog.classList.remove('hidden'); // Exibe paginação de log
+            if (containerPaginacaoLog) containerPaginacaoLog.classList.remove('hidden');
             carregarLogs();
         });
     }
@@ -100,8 +94,6 @@ let paginaAtualUsers = 1;
         abaInativa.classList.add('text-slate-600', 'hover:bg-slate-200');
     }
 
-// === SUBSTITUA AS LINHAS 91 A 100 POR ESTE BLOCO ===
-    // Vincula os filtros de log para redefinir a paginação para 1 ao digitar/mudar
     if (filtroLogData) filtroLogData.addEventListener('change', () => { paginaAtualLogs = 1; carregarLogs(); });
     if (filtroLogResponsavel) filtroLogResponsavel.addEventListener('input', () => { paginaAtualLogs = 1; carregarLogs(); });
 
@@ -114,7 +106,6 @@ let paginaAtualUsers = 1;
         });
     }
 
-    // Escutadores dos botões de paginação de logs
     if (btnLogAnterior && btnLogProximo) {
         btnLogAnterior.addEventListener('click', () => {
             if (paginaAtualLogs > 1) {
@@ -128,30 +119,25 @@ let paginaAtualUsers = 1;
         });
     }
 
-    // === COLOQUE ESTE BLOCO LOGO ABAIXO DO FECHAMENTO DO 'btnLogProximo.addEventListener' (Por volta da linha 110) ===
-    
-    // Escutadores em tempo real para atualizar a busca de logs ao digitar ou selecionar uma data
     if (filtroLogData) {
         filtroLogData.addEventListener('change', () => {
-            paginaAtualLogs = 1; // Reseta para a primeira página ao filtrar por nova data
+            paginaAtualLogs = 1; 
             carregarLogs();
         });
     }
 
     if (filtroLogResponsavel) {
         filtroLogResponsavel.addEventListener('input', () => {
-            paginaAtualLogs = 1; // Reseta para a primeira página ao digitar um nome
+            paginaAtualLogs = 1; 
             carregarLogs();
         });
     }
 
-    // Escutadores para atualizar listagem em tempo real e resetar página para 1
     if (filtroUserNome) filtroUserNome.addEventListener('input', () => { paginaAtualUsers = 1; carregarUsuarios(); });
     if (filtroUserApt)  filtroUserApt.addEventListener('input',  () => { paginaAtualUsers = 1; carregarUsuarios(); });
     if (filtroUserPerfil) filtroUserPerfil.addEventListener('change', () => { paginaAtualUsers = 1; carregarUsuarios(); });
     if (filtroUserStatus) filtroUserStatus.addEventListener('change', () => { paginaAtualUsers = 1; carregarUsuarios(); });
 
-    // Escutadores de Paginação
     if (btnUserAnterior && btnUserProximo) {
         btnUserAnterior.addEventListener('click', () => {
             if (paginaAtualUsers > 1) {
@@ -177,7 +163,6 @@ let paginaAtualUsers = 1;
         });
     }
     
-    // --- 4. API CALLS ---
     async function carregarUsuarios() {
         tabelaContainer.innerHTML = '<div class="p-6 text-center text-slate-500">Carregando usuários...</div>';
         try {
@@ -256,7 +241,6 @@ let paginaAtualUsers = 1;
         }
     }
 
-// === SUBSTITUA A FUNÇÃO carregarLogs() INTEIRA (Linhas 174 a 215) POR ESTA ===
     async function carregarLogs() {
         tabelaContainer.innerHTML = '<div class="p-6 text-center text-slate-500">Carregando logs de auditoria...</div>';
         try {
@@ -265,7 +249,6 @@ let paginaAtualUsers = 1;
             const dataVal = filtroLogData ? filtroLogData.value : '';
             const respVal = filtroLogResponsavel ? filtroLogResponsavel.value.trim() : '';
 
-            // Passa a página ativa dos logs na URL
             const url = `${API_BASE_URL}/sindico/logs?page=${paginaAtualLogs}&data=${dataVal}&responsavel=${encodeURIComponent(respVal)}`;
 
             const response = await fetch(url, {
@@ -281,7 +264,6 @@ let paginaAtualUsers = 1;
                 return;
             }
 
-            // Exibe a barra de paginação e atualiza os textos
             if (containerPaginacaoLog) containerPaginacaoLog.classList.remove('hidden');
             if (textoPaginasLogs && btnLogAnterior && btnLogProximo) {
                 textoPaginasLogs.textContent = `Página ${data.paginacao.pagina_atual} de ${data.paginacao.total_paginas}`;
@@ -290,7 +272,6 @@ let paginaAtualUsers = 1;
                 paginaAtualLogs = data.paginacao.pagina_atual;
             }
 
-            // Cabeçalho da tabela contendo os 3 campos pedidos: Data/Hora, Responsável e Ação Executada
             let html = `
                 <table class="w-full text-left border-collapse">
                     <thead>
@@ -343,7 +324,6 @@ let paginaAtualUsers = 1;
             html += '</tbody></table>';
             tabelaContainer.innerHTML = html;
 
-            // Ativa o evento de clique expansível nas sublinhas de histórico (Gira a seta)
             document.querySelectorAll('.linha-log').forEach(linha => {
                 linha.addEventListener('click', () => {
                     const id = linha.getAttribute('data-id');
@@ -365,7 +345,6 @@ let paginaAtualUsers = 1;
         }
     }
 
-    // --- 5. MODAL SYSTEM FOR CREATE/EDIT ---
     window.editarUsuario = (id, nome, email, tipoUsuario, apartamento) => {
         abrirModal(id, nome, email, tipoUsuario, apartamento);
     };

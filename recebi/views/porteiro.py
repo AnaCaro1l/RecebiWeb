@@ -46,7 +46,6 @@ def registrar_encomenda():
     except (ValueError, TypeError):
         return jsonify({"message": "ID do morador inválido."}), 400
 
-    # Handle case sensitivity for role
     morador = Usuario.query.filter(Usuario.id == morador_id, Usuario.perfil.in_(['Morador', 'morador'])).first()
     if not morador:
         return jsonify({"message": "Morador não encontrado."}), 404
@@ -102,7 +101,6 @@ def verificar_encomendas():
     if claims.get("perfil") != "Porteiro":
         return jsonify({"erro": "Acesso negado. Requer perfil de Porteiro."}), 403
 
-    # Captura os parâmetros vindos do JavaScript
     pagina = request.args.get('page', 1, type=int)
     por_pagina = request.args.get('per_page', 10, type=int)
     status_query = request.args.get('status', '').strip()
@@ -110,14 +108,11 @@ def verificar_encomendas():
     termo_busca = request.args.get('query', '').strip()
 
     try:
-        # Base da consulta fazendo um JOIN explícito com a tabela de Usuários
         query = Encomenda.query.join(Usuario, Encomenda.morador_id == Usuario.id)
 
-        # Filtro condicional por Status
         if status_query:
             query = query.filter(Encomenda.status == status_query)
             
-        # Filtro condicional por Data
         if data_query:
             try:
                 data_objeto = datetime.strptime(data_query, '%Y-%m-%d').date()
@@ -125,24 +120,20 @@ def verificar_encomendas():
             except ValueError:
                 pass
 
-        # Filtro condicional Inteligente (Nome do Morador ou Apartamento)
         if termo_busca:
             query = query.filter(
                 (Encomenda.apartamento.ilike(f"%{termo_busca}%")) | 
                 (Usuario.nome.ilike(f"%{termo_busca}%"))
             )
 
-        # Ordenação por mais recente
         query = query.order_by(Encomenda.data_registro.desc())
 
-        # Execução da paginação nativa
         paginacao = query.paginate(page=pagina, per_page=por_pagina, error_out=False)
 
         resultado_formatado = []
         for e in paginacao.items:
             morador = db.session.get(Usuario, e.morador_id)
             
-            # Busca o log para recuperar o nome do porteiro
             log_registro = LogAuditoria.query.filter_by(
                 registro_id=e.id, 
                 tabela_afetada='encomendas',

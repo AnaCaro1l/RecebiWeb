@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. PROTEÇÃO DE ROTA
     if (!Auth.isAutenticado() || Auth.getUsuario().TipoUsuario.toLowerCase() !== 'porteiro') {
         alert('Acesso negado. Área restrita a Porteiros.');
         Auth.logout();
@@ -9,7 +8,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('user-name').textContent = Auth.getUsuario().Nome;
     document.getElementById('btn-logout').addEventListener('click', () => Auth.logout());
 
-    // 2. CONTROLE DE ABAS E NAVEGAÇÃO
     const menuRegistrar = document.getElementById('menu-registrar');
     const menuLista = document.getElementById('menu-lista');
     const secaoRegistrar = document.getElementById('secao-registrar');
@@ -34,7 +32,6 @@ document.addEventListener('DOMContentLoaded', () => {
         abaInativa.className = "w-full text-left px-4 py-3 rounded-md text-slate-600 hover:bg-slate-200 font-medium transition-colors";
     }
 
-    // 3. LÓGICA DE BUSCA INTELIGENTE DE MORADORES
     const inputBusca = document.getElementById('busca-morador');
     const listaResultados = document.getElementById('lista-moradores');
     const inputMoradorId = document.getElementById('morador-id-selecionado');
@@ -42,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     inputBusca.addEventListener('input', (e) => {
         const termo = e.target.value.trim();
-        inputMoradorId.value = ''; // Limpa a seleção anterior se o porteiro voltar a digitar
+        inputMoradorId.value = '';
         
         clearTimeout(timeoutBusca);
 
@@ -51,7 +48,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Aguarda 300ms depois que o usuário parar de digitar para não inundar o servidor (Debounce)
         timeoutBusca = setTimeout(async () => {
             try {
                 const response = await fetch(`${API_BASE_URL}/porteiro/buscar-moradores?query=${termo}`, {
@@ -75,7 +71,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 li.className = 'p-3 hover:bg-slate-100 cursor-pointer text-sm border-b border-slate-100 last:border-0';
                 li.innerHTML = `<strong>Apt ${m.Apartamento || 'N/A'}</strong> - ${m.Nome}`;
                 
-                // Ao clicar no morador da lista
                 li.addEventListener('click', () => {
                     inputBusca.value = `Apt ${m.Apartamento || 'N/A'} - ${m.Nome}`;
                     inputMoradorId.value = m.IdUsuario;
@@ -88,14 +83,12 @@ document.addEventListener('DOMContentLoaded', () => {
         listaResultados.classList.remove('hidden');
     }
 
-    // Esconde a lista de resultados se clicar fora
     document.addEventListener('click', (e) => {
         if (e.target !== inputBusca && e.target !== listaResultados) {
             listaResultados.classList.add('hidden');
         }
     });
 
-    // 4. LÓGICA DE REGISTRO DE ENCOMENDA
     const formEncomenda = document.getElementById('form-encomenda');
     const msgFeedback = document.getElementById('msg-feedback');
     const btnSalvar = document.getElementById('btn-salvar');
@@ -153,7 +146,6 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => msgFeedback.classList.add('hidden'), 5000);
     }
 
-// 5. CARREGAR TABELA DE ENCOMENDAS (COM PAGINAÇÃO, FILTROS, BUSCA INTELIGENTE E CASCATA)
     let paginaAtual = 1;
     const filtroData = document.getElementById('filtro-data');
     const filtroStatus = document.getElementById('filtro-status');
@@ -162,17 +154,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnProximo = document.getElementById('btn-pag-proximo');
     const textoPaginas = document.getElementById('texto-paginas');
     
-    // CAPTURA O INPUT DE BUSCA DA LISTAGEM
     const inputBuscaEncomenda = document.getElementById('busca-encomenda') || document.getElementById('input-busca');
 
-    // Escutadores para atualizar a listagem ao mudar os filtros ou digitar na busca
     filtroData.addEventListener('change', () => { paginaAtual = 1; carregarEncomendas(); });
     filtroStatus.addEventListener('change', () => { paginaAtual = 1; carregarEncomendas(); });
     
-    // Atualiza a busca em tempo real enquanto o porteiro digita o nome ou apt
     if (inputBuscaEncomenda) {
         inputBuscaEncomenda.addEventListener('input', () => {
-            paginaAtual = 1; // Reseta para a primeira página ao pesquisar
+            paginaAtual = 1; 
             carregarEncomendas();
         });
     }
@@ -185,7 +174,6 @@ document.addEventListener('DOMContentLoaded', () => {
         carregarEncomendas();
     });
 
-    // Escutadores dos botões de paginação
     btnAnterior.addEventListener('click', () => {
         if (paginaAtual > 1) {
             paginaAtual--;
@@ -205,7 +193,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const statusVal = filtroStatus.value;
         const buscaVal = inputBuscaEncomenda ? inputBuscaEncomenda.value.trim() : '';
         
-        // MODIFICADO: Passa o parâmetro 'query' contendo a busca por nome ou apartamento
         const url = `${API_BASE_URL}/porteiro/encomendas?page=${paginaAtual}&status=${statusVal}&data=${dataVal}&query=${encodeURIComponent(buscaVal)}`;
 
         try {
@@ -310,7 +297,6 @@ document.addEventListener('DOMContentLoaded', () => {
         html += '</tbody></table>';
         tabelaContainer.innerHTML = html;
 
-        // Adiciona evento de clique para expandir/recolher a cascata ao clicar em qualquer lugar da linha
         document.querySelectorAll('.linha-registro').forEach(linha => {
             linha.addEventListener('click', () => {
                 const id = linha.getAttribute('data-id');
@@ -319,15 +305,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 if (linhaDetalhe.classList.contains('hidden')) {
                     linhaDetalhe.classList.remove('hidden');
-                    seta.style.transform = 'rotate(90deg)'; // Gira a seta para baixo
+                    seta.style.transform = 'rotate(90deg)'; 
                 } else {
                     linhaDetalhe.classList.add('hidden');
-                    seta.style.transform = 'rotate(0deg)';  // Reseta a seta para frente
+                    seta.style.transform = 'rotate(0deg)';  
                 }
             });
         });
     }
 
-    // Aciona a listagem inicial
     menuLista.click();
 });

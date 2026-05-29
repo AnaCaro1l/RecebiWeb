@@ -4,16 +4,12 @@
 
 {% block body %}
 <script>
-    // Script de redirecionamento - executa antes de renderizar qualquer coisa
     document.addEventListener('DOMContentLoaded', () => {
-        // Verifica se o usuário está autenticado
         const token = localStorage.getItem('token');
 
         if (!token) {
-            // Não autenticado - redireciona para login
             window.location.href = '/login';
         } else {
-            // Autenticado - redireciona para o dashboard apropriado
             try {
                 const usuario = JSON.parse(localStorage.getItem('usuario'));
                 if (!usuario || !usuario.TipoUsuario) {
@@ -29,12 +25,10 @@
                 } else if (tipoUsuario === 'sindico') {
                     window.location.href = '/sindico.html';
                 } else {
-                    // Tipo desconhecido - volta para login
                     localStorage.clear();
                     window.location.href = '/login';
                 }
             } catch (error) {
-                // Erro ao processar - volta para login
                 localStorage.clear();
                 window.location.href = '/login';
             }
@@ -42,7 +36,6 @@
     });
 </script>
 
-<!-- Fallback loading screen -->
 <div class="h-screen flex items-center justify-center bg-slate-100">
     <div class="text-center">
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>

@@ -1,21 +1,16 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. PROTEÇÃO DE ROTA
     if (!Auth.isAutenticado() || Auth.getUsuario().TipoUsuario.toLowerCase() !== 'morador') {
         alert('Acesso negado. Área restrita a Moradores.');
         Auth.logout();
         return;
     }
 
-    // 2. DADOS DO USUÁRIO LOGADO
     const usuario = Auth.getUsuario();
     document.getElementById('user-name').textContent = usuario.Nome;
     document.getElementById('user-apt').textContent = `Morador - Apt ${usuario.Apartamento || 'N/A'}`;
     
     document.getElementById('btn-logout').addEventListener('click', () => Auth.logout());
 
-    // 3. ELEMENTOS DA TELA
-// === SUBSTITUA DA LINHA 17 ATÉ O FINAL DO ARQUIVO POR ESTE BLOCO ===
-    // 3. ELEMENTOS DA TELA, FILTROS E PAGINAÇÃO
     const tabelaContainer = document.getElementById('tabela-container');
     const msgFeedback = document.getElementById('msg-feedback');
 
@@ -29,7 +24,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const textoPaginas = document.getElementById('texto-paginas-morador');
     const containerPaginacao = document.getElementById('paginacao-morador-container');
 
-    // Crava o fuso horário e formatação brasileira para as datas (dd/mm/aaaa hh:mm)
     const opcoesDataBR = {
         timeZone: 'America/Sao_Paulo',
         day: '2-digit',
@@ -39,7 +33,6 @@ document.addEventListener('DOMContentLoaded', () => {
         minute: '2-digit'
     };
 
-    // --- ESCUTADORES DE EVENTOS EM TEMPO REAL ---
     if (filtroStatus) {
         filtroStatus.addEventListener('change', () => {
             paginaAtual = 1; // Reseta para a primeira página ao alterar o status
@@ -47,7 +40,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Cria a máscara com barras automática para digitação da data (dd/mm/aaaa)
     if (filtroData) {
         filtroData.addEventListener('change', () => {
             paginaAtual = 1; // Reseta para a primeira página ao escolher uma nova data

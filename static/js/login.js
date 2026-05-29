@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Redirect if session is already active
     if (Auth.isAutenticado()) {
         redirecionarPorPerfil(Auth.getUsuario().TipoUsuario);
     }
