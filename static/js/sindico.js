@@ -42,13 +42,18 @@ let paginaAtualUsers = 1;
     const textoPaginasUser = document.getElementById('texto-paginas-user');
     const containerPaginacaoUser = document.getElementById('paginacao-usuarios-container');
 
-    // NOVAS DECLARAÇÕES: Filtros da aba de Logs de Auditoria
     const containerFiltrosLog = document.getElementById('container-filtros-logs');
     const filtroLogData = document.getElementById('filtro-log-data');
     const filtroLogResponsavel = document.getElementById('filtro-log-responsavel');
     const btnLimparLogFiltros = document.getElementById('btn-limpar-log-filtros');
 
     let currentTab = 'usuarios';
+
+    let paginaAtualLogs = 1;
+    const btnLogAnterior = document.getElementById('btn-log-anterior');
+    const btnLogProximo = document.getElementById('btn-log-proximo');
+    const textoPaginasLogs = document.getElementById('texto-paginas-logs');
+    const containerPaginacaoLog = document.getElementById('paginacao-logs-container');
 
     // Máscara de fuso horário rígida para cravar o padrão brasileiro
     const opcoesDataBR = {
@@ -61,6 +66,7 @@ let paginaAtualUsers = 1;
         second: '2-digit'
     };
 
+// === SUBSTITUA O BLOCO 'if (menuUsuarios && menuLogs)' (Linhas 61 a 83) POR ESTE ===
     if (menuUsuarios && menuLogs) {
         menuUsuarios.addEventListener('click', () => {
             currentTab = 'usuarios';
@@ -69,7 +75,8 @@ let paginaAtualUsers = 1;
             btnNovoUsuario.classList.remove('hidden');
             if (containerFiltrosUser) containerFiltrosUser.classList.remove('hidden');   
             if (containerPaginacaoUser) containerPaginacaoUser.classList.remove('hidden'); 
-            if (containerFiltrosLog) containerFiltrosLog.classList.add('hidden'); // Esconde filtros do log
+            if (containerFiltrosLog) containerFiltrosLog.classList.add('hidden'); 
+            if (containerPaginacaoLog) containerPaginacaoLog.classList.add('hidden'); // Oculta paginação de log
             carregarUsuarios();
         });
 
@@ -80,7 +87,8 @@ let paginaAtualUsers = 1;
             btnNovoUsuario.classList.add('hidden');
             if (containerFiltrosUser) containerFiltrosUser.classList.add('hidden');   
             if (containerPaginacaoUser) containerPaginacaoUser.classList.add('hidden'); 
-            if (containerFiltrosLog) containerFiltrosLog.classList.remove('hidden'); // Exibe filtros do log
+            if (containerFiltrosLog) containerFiltrosLog.classList.remove('hidden'); 
+            if (containerPaginacaoLog) containerPaginacaoLog.classList.remove('hidden'); // Exibe paginação de log
             carregarLogs();
         });
     }
@@ -92,13 +100,30 @@ let paginaAtualUsers = 1;
         abaInativa.classList.add('text-slate-600', 'hover:bg-slate-200');
     }
 
-    if (filtroLogData) filtroLogData.addEventListener('change', carregarLogs);
-    if (filtroLogResponsavel) filtroLogResponsavel.addEventListener('input', carregarLogs);
+// === SUBSTITUA AS LINHAS 91 A 100 POR ESTE BLOCO ===
+    // Vincula os filtros de log para redefinir a paginação para 1 ao digitar/mudar
+    if (filtroLogData) filtroLogData.addEventListener('change', () => { paginaAtualLogs = 1; carregarLogs(); });
+    if (filtroLogResponsavel) filtroLogResponsavel.addEventListener('input', () => { paginaAtualLogs = 1; carregarLogs(); });
 
     if (btnLimparLogFiltros) {
         btnLimparLogFiltros.addEventListener('click', () => {
             filtroLogData.value = '';
             filtroLogResponsavel.value = '';
+            paginaAtualLogs = 1;
+            carregarLogs();
+        });
+    }
+
+    // Escutadores dos botões de paginação de logs
+    if (btnLogAnterior && btnLogProximo) {
+        btnLogAnterior.addEventListener('click', () => {
+            if (paginaAtualLogs > 1) {
+                paginaAtualLogs--;
+                carregarLogs();
+            }
+        });
+        btnLogProximo.addEventListener('click', () => {
+            paginaAtualLogs++;
             carregarLogs();
         });
     }
@@ -214,7 +239,8 @@ let paginaAtualUsers = 1;
         }
     }
 
-async function carregarLogs() {
+// === SUBSTITUA A FUNÇÃO carregarLogs() INTEIRA (Linhas 174 a 215) POR ESTA ===
+    async function carregarLogs() {
         tabelaContainer.innerHTML = '<div class="p-6 text-center text-slate-500">Carregando logs de auditoria...</div>';
         try {
             const token = Auth.getToken();
@@ -222,8 +248,8 @@ async function carregarLogs() {
             const dataVal = filtroLogData ? filtroLogData.value : '';
             const respVal = filtroLogResponsavel ? filtroLogResponsavel.value.trim() : '';
 
-            // Envia os dados capturados nas caixas superiores para a rota filtrada do Flask
-            const url = `${API_BASE_URL}/sindico/logs?data=${dataVal}&responsavel=${encodeURIComponent(respVal)}`;
+            // Passa a página ativa dos logs na URL
+            const url = `${API_BASE_URL}/sindico/logs?page=${paginaAtualLogs}&data=${dataVal}&responsavel=${encodeURIComponent(respVal)}`;
 
             const response = await fetch(url, {
                 headers: { 'Authorization': `Bearer ${token}` }
@@ -232,32 +258,45 @@ async function carregarLogs() {
 
             if (!response.ok) throw new Error(data.message || 'Erro ao carregar logs.');
 
-            if (!Array.isArray(data) || data.length === 0) {
+            if (!data.logs || data.logs.length === 0) {
                 tabelaContainer.innerHTML = '<div class="p-6 text-center text-slate-500">Nenhum registro de log encontrado para os filtros aplicados.</div>';
+                if (containerPaginacaoLog) containerPaginacaoLog.classList.add('hidden');
                 return;
             }
 
-            // Inicia o cabeçalho estrutural limitado apenas a Data/Hora, Responsável e Ações (Seta)
+            // Exibe a barra de paginação e atualiza os textos
+            if (containerPaginacaoLog) containerPaginacaoLog.classList.remove('hidden');
+            if (textoPaginasLogs && btnLogAnterior && btnLogProximo) {
+                textoPaginasLogs.textContent = `Página ${data.paginacao.pagina_atual} de ${data.paginacao.total_paginas}`;
+                btnLogAnterior.disabled = !data.paginacao.tem_anterior;
+                btnLogProximo.disabled = !data.paginacao.tem_proximo;
+                paginaAtualLogs = data.paginacao.pagina_atual;
+            }
+
+            // Cabeçalho da tabela contendo os 3 campos pedidos: Data/Hora, Responsável e Ação Executada
             let html = `
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-slate-50 text-slate-600 text-xs font-semibold uppercase border-b border-slate-200">
                             <th class="p-4">Data/Hora</th>
                             <th class="p-4">Responsável</th>
+                            <th class="p-4">Ação Executada</th>
                             <th class="p-4 text-center w-24">Ações</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 text-sm">
             `;
 
-            data.forEach(log => {
-                // Formatação blindada no padrão DD/MM/AAAA HH:MM:SS
+            data.logs.forEach(log => {
                 const dateFormatted = log.DataHora ? new Date(log.DataHora).toLocaleString('pt-BR', opcoesDataBR) : 'N/A';
 
                 html += `
                     <tr class="hover:bg-slate-50 transition-colors cursor-pointer linha-log" data-id="${log.IdHistorico}">
                         <td class="p-4 whitespace-nowrap font-medium text-slate-900">${dateFormatted}</td>
                         <td class="p-4 font-semibold text-slate-700">${log.Usuario}</td>
+                        <td class="p-4 text-slate-900">
+                            <span class="bg-slate-100 px-2 py-1 rounded border border-slate-200 font-mono text-xs text-slate-600">${log.Acao}</span>
+                        </td>
                         <td class="p-4 text-center">
                             <span class="inline-block transition-transform duration-200 text-slate-400 select-none text-xs" 
                                   id="seta-log-${log.IdHistorico}">▶</span>
@@ -265,12 +304,11 @@ async function carregarLogs() {
                     </tr>
                     
                     <tr id="detalhe-log-${log.IdHistorico}" class="hidden bg-slate-50/60 border-b border-slate-200">
-                        <td colspan="3" class="px-12 py-4 text-slate-600 bg-slate-50/90">
+                        <td colspan="4" class="px-12 py-4 text-slate-600 bg-slate-50/90">
                             <div class="border-l-2 border-[#4a90e2] pl-4 py-1 text-xs space-y-2">
                                 <p class="text-slate-400 font-medium uppercase tracking-wider mb-0.5">Contexto Histórico do Log</p>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <p class="text-slate-500 mb-1"><strong class="text-slate-700">Ação Executada:</strong> ${log.Acao}</p>
                                         <p class="text-slate-500 mb-1"><strong class="text-slate-700">Encomenda Relacionada:</strong> ${log.EncomendaDescricao || 'N/A'}</p>
                                         <p class="text-slate-500"><strong class="text-slate-700">Apt Vinculado:</strong> ${log.EncomendaApartamento || 'N/A'}</p>
                                     </div>
@@ -288,19 +326,19 @@ async function carregarLogs() {
             html += '</tbody></table>';
             tabelaContainer.innerHTML = html;
 
-            // Ativa o evento de clique expansível nas sublinhas de histórico
+            // Ativa o evento de clique expansível nas sublinhas de histórico (Gira a seta)
             document.querySelectorAll('.linha-log').forEach(linha => {
                 linha.addEventListener('click', () => {
                     const id = linha.getAttribute('data-id');
                     const detalhe = document.getElementById(`detalhe-log-${id}`);
                     const seta = document.getElementById(`seta-log-${id}`);
                     
-                    if (detalhe.classList.contains('hidden')) {
+                    if (detalhe && detalhe.classList.contains('hidden')) {
                         detalhe.classList.remove('hidden');
-                        if (seta) seta.style.transform = 'rotate(90deg)'; // Rotaciona a seta para baixo
-                    } else {
+                        if (seta) seta.style.transform = 'rotate(90deg)';
+                    } else if (detalhe) {
                         detalhe.classList.add('hidden');
-                        if (seta) seta.style.transform = 'rotate(0deg)';  // Volta a seta para frente
+                        if (seta) seta.style.transform = 'rotate(0deg)';
                     }
                 });
             });

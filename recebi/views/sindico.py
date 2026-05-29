@@ -254,15 +254,14 @@ def consultar_logs():
     if claims.get("perfil") != "Sindico":
         return jsonify({"erro": "Acesso negado."}), 403
 
-    # Captura os parâmetros de filtros enviados pelo JavaScript
+    # Captura os parâmetros de filtros e paginação enviados pelo JavaScript
+    pagina = request.args.get('page', 1, type=int)
     data_param = request.args.get('data', '').strip()
     responsavel_param = request.args.get('responsavel', '').strip()
 
     try:
-        # Base da consulta fazendo um JOIN para podermos pesquisar textualmente pelo nome do criador do log
         query = LogAuditoria.query.join(Usuario, LogAuditoria.usuario_responsavel_id == Usuario.id)
 
-        # Filtro por Data (ignora a hora no cruzamento de dados)
         if data_param:
             try:
                 data_objeto = datetime.strptime(data_param, '%Y-%m-%d').date()
@@ -270,14 +269,17 @@ def consultar_logs():
             except ValueError:
                 pass
 
-        # Filtro por Nome do Responsável (parcial e sem distinção de maiúsculas/minúsculas)
         if responsavel_param:
             query = query.filter(Usuario.nome.ilike(f"%{responsavel_param}%"))
 
-        historicos = query.order_by(LogAuditoria.data_acao.desc()).all()
+        # Ordena sempre pelos logs mais recentes
+        query = query.order_by(LogAuditoria.data_acao.desc())
+
+        # Aplica paginação nativa limitando a 10 registros por página
+        paginacao = query.paginate(page=pagina, per_page=10, error_out=False)
         resultado = []
 
-        for h in historicos:
+        for h in paginacao.items:
             usuario = db.session.get(Usuario, h.usuario_responsavel_id)
             
             encomenda_descricao = "Sem referência"
@@ -285,26 +287,30 @@ def consultar_logs():
             
             if h.tabela_afetada == 'encomendas' and h.registro_id != 0:
                 encomenda = db.session.get(Encomenda, h.registro_id)
-                if encomenda:
-                    encomenda_descricao = encomenda.descricao
-                    morador = db.session.get(Usuario, encomenda.morador_id)
+                if enigma := encomenda:
+                    encomenda_descricao = enigma.descricao
+                    morador = db.session.get(Usuario, enigma.morador_id)
                     encomenda_apartamento = morador.apartamento if morador else "Sem apartamento"
 
             resultado.append({
                 "IdHistorico": h.id,
                 "Usuario": usuario.nome if usuario else "Usuário removido",
                 "Acao": h.acao,
-                "Tipo": h.acao, 
                 "DataHora": h.data_acao.isoformat(),
                 "EncomendaDescricao": encomenda_descricao,
                 "EncomendaApartamento": encomenda_apartamento,
                 "Detalhes": json.loads(h.estado_posterior) if h.estado_posterior else None
             })
 
-        if not resultado:
-            return jsonify({"message": "Nenhum histórico encontrado."}), 200
-
-        return jsonify(resultado), 200
+        return jsonify({
+            "logs": resultado,
+            "paginacao": {
+                "pagina_atual": paginacao.page,
+                "total_paginas": paginacao.pages,
+                "tem_anterior": paginacao.has_prev,
+                "tem_proximo": paginacao.has_next
+            }
+        }), 200
 
     except Exception as ex:
         print(f"Erro em ConsultarLogs: {str(ex)}")
