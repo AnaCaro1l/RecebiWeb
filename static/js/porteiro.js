@@ -262,6 +262,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const statusClass = e.Status === 'Pendente' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800';
             const dataIn = e.DataEntrada ? new Date(e.DataEntrada).toLocaleString('pt-BR') : 'N/A';
             const dataOut = e.DataRetirada ? new Date(e.DataRetirada).toLocaleString('pt-BR') : 'Ainda não retirada';
+            const opcoesFormatacao = {
+                timeZone: 'America/Sao_Paulo',
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            };
 
             html += `
                 <tr class="bg-white border-b hover:bg-slate-50 transition-colors cursor-pointer linha-registro" data-id="${e.IdEncomenda}">
