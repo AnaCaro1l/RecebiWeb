@@ -100,50 +100,53 @@ def registrar_encomenda():
 def verificar_encomendas():
     claims = get_jwt()
     if claims.get("perfil") != "Porteiro":
-        return jsonify({"erro": "Acesso negado."}), 403
+        return jsonify({"erro": "Acesso negado. Requer perfil de Porteiro."}), 403
 
-    # 1. Capturar parâmetros de paginação e filtros da URL
-    page = request.args.get('page', 1, type=int)
-    per_page = 10
-    
+    # Captura os parâmetros vindos do JavaScript
+    pagina = request.args.get('page', 1, type=int)
+    por_pagina = request.args.get('per_page', 10, type=int)
     status_query = request.args.get('status', '').strip()
     data_query = request.args.get('data', '').strip()
+    termo_busca = request.args.get('query', '').strip()
 
     try:
-        # Query base inicial
-        query = Encomenda.query
+        # Base da consulta fazendo um JOIN explícito com a tabela de Usuários
+        query = Encomenda.query.join(Usuario, Encomenda.morador_id == Usuario.id)
 
-        # 2. Aplicar filtros condicionais se forem enviados pelo front-end
+        # Filtro condicional por Status
         if status_query:
-            query = query.filter_by(status=status_query)
+            query = query.filter(Encomenda.status == status_query)
             
+        # Filtro condicional por Data
         if data_query:
             try:
-                # Converte a string 'YYYY-MM-DD' para um objeto date e filtra ignorando o horário
                 data_objeto = datetime.strptime(data_query, '%Y-%m-%d').date()
                 query = query.filter(db.func.date(Encomenda.data_registro) == data_objeto)
             except ValueError:
-                pass  # Ignora se a data vier em formato inválido
+                pass
 
-        # Ordenar pelas encomendas mais recentes
+        # Filtro condicional Inteligente (Nome do Morador ou Apartamento)
+        if termo_busca:
+            query = query.filter(
+                (Encomenda.apartamento.ilike(f"%{termo_busca}%")) | 
+                (Usuario.nome.ilike(f"%{termo_busca}%"))
+            )
+
+        # Ordenação por mais recente
         query = query.order_by(Encomenda.data_registro.desc())
 
-        # 3. Executar Paginação Nativa do SQLAlchemy (Evita sobrecarregar a memória)
-        paginacao = query.paginate(page=page, per_page=per_page, error_out=False)
+        # Execução da paginação nativa
+        paginacao = query.paginate(page=pagina, per_page=por_pagina, error_out=False)
 
         resultado_formatado = []
         for e in paginacao.items:
             morador = db.session.get(Usuario, e.morador_id)
             
-            # Reutiliza sua lógica exata de buscar quem registrou no histórico de auditoria
+            # Busca o log para recuperar o nome do porteiro
             log_registro = LogAuditoria.query.filter_by(
                 registro_id=e.id, 
-                tabela_afetada='encomendas'
-            ).filter(
-                or_(
-                    LogAuditoria.acao == 'Registro de Encomenda',
-                    LogAuditoria.acao.like("Porteiro registrou%")
-                )
+                tabela_afetada='encomendas',
+                acao='Registro de Encomenda'
             ).first()
             
             nome_porteiro = "N/A"
@@ -153,17 +156,19 @@ def verificar_encomendas():
 
             resultado_formatado.append({
                 "IdEncomenda": e.id,
-                "Apartamento": morador.apartamento if morador else "N/A",
-                "Morador": morador.nome if morador else "N/A",
                 "Descricao": e.descricao,
                 "CodigoRastreio": e.codigo_rastreio,
                 "Status": e.status,
+                "Apartamento": e.apartamento if e.apartamento else (morador.apartamento if morador else "N/A"),
+                "Morador": morador.nome if morador else "N/A",
                 "DataEntrada": e.data_registro.isoformat() if e.data_registro else None,
                 "DataRetirada": e.data_retirada.isoformat() if e.data_retirada else None,
                 "Porteiro": nome_porteiro
             })
 
-        # 4. Retornar os dados envelopados com metadados de paginação
+        if not resultado_formatado:
+            return jsonify({"message": "Nenhuma encomenda encontrada."}), 200
+
         return jsonify({
             "encomendas": resultado_formatado,
             "paginacao": {

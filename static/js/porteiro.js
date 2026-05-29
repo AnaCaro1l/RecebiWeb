@@ -153,7 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => msgFeedback.classList.add('hidden'), 5000);
     }
 
-    // 5. CARREGAR TABELA DE ENCOMENDAS (ABA LISTA)
+// 5. CARREGAR TABELA DE ENCOMENDAS (COM PAGINAÇÃO, FILTROS, BUSCA INTELIGENTE E CASCATA)
     let paginaAtual = 1;
     const filtroData = document.getElementById('filtro-data');
     const filtroStatus = document.getElementById('filtro-status');
@@ -161,14 +161,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnAnterior = document.getElementById('btn-pag-anterior');
     const btnProximo = document.getElementById('btn-pag-proximo');
     const textoPaginas = document.getElementById('texto-paginas');
+    
+    // CAPTURA O INPUT DE BUSCA DA LISTAGEM
+    const inputBuscaEncomenda = document.getElementById('busca-encomenda') || document.getElementById('input-busca');
 
-    // Escutadores para atualizar a listagem ao mudar os filtros
+    // Escutadores para atualizar a listagem ao mudar os filtros ou digitar na busca
     filtroData.addEventListener('change', () => { paginaAtual = 1; carregarEncomendas(); });
     filtroStatus.addEventListener('change', () => { paginaAtual = 1; carregarEncomendas(); });
+    
+    // Atualiza a busca em tempo real enquanto o porteiro digita o nome ou apt
+    if (inputBuscaEncomenda) {
+        inputBuscaEncomenda.addEventListener('input', () => {
+            paginaAtual = 1; // Reseta para a primeira página ao pesquisar
+            carregarEncomendas();
+        });
+    }
     
     btnLimpar.addEventListener('click', () => {
         filtroData.value = '';
         filtroStatus.value = '';
+        if (inputBuscaEncomenda) inputBuscaEncomenda.value = '';
         paginaAtual = 1;
         carregarEncomendas();
     });
@@ -191,9 +203,10 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const dataVal = filtroData.value;
         const statusVal = filtroStatus.value;
+        const buscaVal = inputBuscaEncomenda ? inputBuscaEncomenda.value.trim() : '';
         
-        // Monta a URL passando página e parâmetros de busca para a API
-        const url = `${API_BASE_URL}/porteiro/encomendas?page=${paginaAtual}&status=${statusVal}&data=${dataVal}`;
+        // MODIFICADO: Passa o parâmetro 'query' contendo a busca por nome ou apartamento
+        const url = `${API_BASE_URL}/porteiro/encomendas?page=${paginaAtual}&status=${statusVal}&data=${dataVal}&query=${encodeURIComponent(buscaVal)}`;
 
         try {
             const response = await fetch(url, {
@@ -239,7 +252,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         <th class="px-6 py-3">Descrição</th>
                         <th class="px-6 py-3">Status</th>
                         <th class="px-6 py-3">Data/Hora de Entrada</th>
-                        <th class="px-4 py-3 w-10 text-center">Ações</th> </tr>
+                        <th class="px-4 py-3 w-10 text-center">Ações</th> 
+                    </tr>
                 </thead>
                 <tbody>
         `;
@@ -304,6 +318,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
     }
-    menuLista.click();
 
+    // Aciona a listagem inicial
+    menuLista.click();
 });

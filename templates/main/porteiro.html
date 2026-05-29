@@ -74,13 +74,18 @@
     <section id="secao-lista" class="hidden">
         <h2 class="text-2xl font-bold text-[#333] mb-6">Encomendas Registradas</h2>
         
-        <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 mb-6 flex flex-wrap gap-4 items-end">
-            <div class="flex-1 min-w-[200px]">
+<div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 mb-6 flex flex-wrap gap-4 items-end">
+            <div class="flex-2 min-w-[250px] flex-1">
+                <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Buscar Encomenda</label>
+                <input type="text" id="input-busca" placeholder="Digite o nome do morador ou nº do apt..."
+                    class="w-full p-2 border border-slate-300 rounded-md text-sm outline-none focus:border-[#4a90e2]">
+            </div>
+            <div class="flex-1 min-w-[180px]">
                 <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Filtrar por Data</label>
                 <input type="date" id="filtro-data" 
                     class="w-full p-2 border border-slate-300 rounded-md text-sm outline-none focus:border-[#4a90e2]">
             </div>
-            <div class="flex-1 min-w-[200px]">
+            <div class="flex-1 min-w-[180px]">
                 <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Filtrar por Status</label>
                 <select id="filtro-status" 
                     class="w-full p-2 border border-slate-300 rounded-md text-sm bg-white outline-none focus:border-[#4a90e2]">
