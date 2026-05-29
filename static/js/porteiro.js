@@ -234,12 +234,12 @@ document.addEventListener('DOMContentLoaded', () => {
             <table class="w-full text-sm text-left text-slate-500 border-collapse">
                 <thead class="text-xs text-slate-700 uppercase bg-slate-100 border-b border-slate-200">
                     <tr>
-                        <th class="px-4 py-3 w-10"></th> <th class="px-6 py-3">Apt</th>
+                        <th class="px-6 py-3">Apt</th>
                         <th class="px-6 py-3">Morador</th>
                         <th class="px-6 py-3">Descrição</th>
                         <th class="px-6 py-3">Status</th>
                         <th class="px-6 py-3">Data/Hora de Entrada</th>
-                    </tr>
+                        <th class="px-4 py-3 w-10 text-center">Ações</th> </tr>
                 </thead>
                 <tbody>
         `;
@@ -251,9 +251,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             html += `
                 <tr class="bg-white border-b hover:bg-slate-50 transition-colors cursor-pointer linha-registro" data-id="${e.IdEncomenda}">
-                    <td class="px-4 py-4 text-center">
-                        <span class="inline-block transform transition-transform duration-200 seta-icone text-xs text-slate-400" id="seta-${e.IdEncomenda}">▶</span>
-                    </td>
                     <td class="px-6 py-4 font-bold text-slate-900">${e.Apartamento || 'N/A'}</td>
                     <td class="px-6 py-4">${e.Morador}</td>
                     <td class="px-6 py-4">
@@ -264,14 +261,18 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span class="px-2.5 py-0.5 rounded text-xs font-semibold ${statusClass}">${e.Status}</span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">${dataIn}</td>
+                    <td class="px-4 py-4 text-center">
+                        <span class="inline-block transition-transform duration-200 text-slate-400 select-none cursor-pointer text-xs" 
+                            id="seta-${e.IdEncomenda}">▶</span>
+                    </td>
                 </tr>
                 
                 <tr id="detalhe-${e.IdEncomenda}" class="hidden bg-slate-50/50 border-b border-slate-200">
                     <td colspan="6" class="px-12 py-4 text-slate-600 bg-slate-50/70">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-l-2 border-slate-300 pl-4 py-1 text-xs">
                             <div>
-                                <p class="text-slate-400 font-medium uppercase tracking-wider mb-0.5">Porteiro Responsável pelo Recebimento</p>
-                                <p class="text-sm font-semibold text-slate-700">${e.Porteiro || 'Não registrado'}</p>
+                                <p class="text-slate-400 font-medium uppercase tracking-wider mb-0.5">Porteiro que recebeu</p>
+                                <p class="text-sm font-semibold text-slate-700">${e.Porteiro || 'N/A'}</p>
                             </div>
                             <div>
                                 <p class="text-slate-400 font-medium uppercase tracking-wider mb-0.5">Data/Hora da Retirada pelo Morador</p>

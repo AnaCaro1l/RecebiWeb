@@ -6,12 +6,13 @@ from recebi.models.historico import Historico as LogAuditoria
 from recebi.ext.db import db
 import json
 from datetime import datetime
+from sqlalchemy import or_
 
 porteiro_bp = Blueprint('porteiro', __name__)
 
 def registrar_historico(id_usuario, acao, tipo, registro_id, detalhes=None):
     log = LogAuditoria(
-        acao=acao,
+        acao=tipo,  
         tabela_afetada='encomendas',
         registro_id=registro_id,
         estado_posterior=json.dumps(detalhes) if detalhes else None,
@@ -137,8 +138,12 @@ def verificar_encomendas():
             # Reutiliza sua lógica exata de buscar quem registrou no histórico de auditoria
             log_registro = LogAuditoria.query.filter_by(
                 registro_id=e.id, 
-                tabela_afetada='encomendas',
-                acao='Registro de Encomenda'
+                tabela_afetada='encomendas'
+            ).filter(
+                or_(
+                    LogAuditoria.acao == 'Registro de Encomenda',
+                    LogAuditoria.acao.like("Porteiro registrou%")
+                )
             ).first()
             
             nome_porteiro = "N/A"
