@@ -39,26 +39,7 @@
         </button>
     </div>
 
-    <div id="container-filtros-usuarios" class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 mb-6 flex flex-wrap gap-4 items-end">
-        <div id="container-filtros-logs" class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 mb-6 flex flex-wrap gap-4 items-end hidden">
-            <div class="flex-1 min-w-[200px]">
-                <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Filtrar por Data</label>
-                <input type="date" id="filtro-log-data" 
-                    class="w-full p-2 border border-slate-300 rounded-md text-sm outline-none focus:border-[#4a90e2]">
-            </div>
-            <div class="flex-2 min-w-[250px] flex-1">
-                <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Responsável</label>
-                <input type="text" id="filtro-log-responsavel" placeholder="Nome do responsável..."
-                    class="w-full p-2 border border-slate-300 rounded-md text-sm outline-none focus:border-[#4a90e2]">
-            </div>
-            <div class="flex gap-2">
-                <button id="btn-limpar-log-filtros" 
-                    class="px-4 py-2 text-sm text-slate-600 border border-slate-300 rounded-md hover:bg-slate-50 font-medium transition-colors">
-                    Limpar
-                </button>
-            </div>
-        </div>
-
+<div id="container-filtros-usuarios" class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 mb-6 flex flex-wrap gap-4 items-end">
         <div class="flex-1 min-w-[200px]">
             <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Nome</label>
             <input type="text" id="filtro-user-nome" placeholder="Pesquisar nome..."
@@ -88,6 +69,25 @@
         </div>
         <div class="flex gap-2">
             <button id="btn-limpar-user-filtros" 
+                class="px-4 py-2 text-sm text-slate-600 border border-slate-300 rounded-md hover:bg-slate-50 font-medium transition-colors">
+                Limpar
+            </button>
+        </div>
+    </div>
+
+    <div id="container-filtros-logs" class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 mb-6 flex flex-wrap gap-4 items-end hidden">
+        <div class="flex-1 min-w-[200px]">
+            <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Filtrar por Data</label>
+            <input type="date" id="filtro-log-data" 
+                class="w-full p-2 border border-slate-300 rounded-md text-sm outline-none focus:border-[#4a90e2]">
+        </div>
+        <div class="flex-2 min-w-[250px] flex-1">
+            <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Responsável</label>
+            <input type="text" id="filtro-log-responsavel" placeholder="Nome do responsável..."
+                class="w-full p-2 border border-slate-300 rounded-md text-sm outline-none focus:border-[#4a90e2]">
+        </div>
+        <div class="flex gap-2">
+            <button id="btn-limpar-log-filtros" 
                 class="px-4 py-2 text-sm text-slate-600 border border-slate-300 rounded-md hover:bg-slate-50 font-medium transition-colors">
                 Limpar
             </button>

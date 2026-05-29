@@ -128,6 +128,23 @@ let paginaAtualUsers = 1;
         });
     }
 
+    // === COLOQUE ESTE BLOCO LOGO ABAIXO DO FECHAMENTO DO 'btnLogProximo.addEventListener' (Por volta da linha 110) ===
+    
+    // Escutadores em tempo real para atualizar a busca de logs ao digitar ou selecionar uma data
+    if (filtroLogData) {
+        filtroLogData.addEventListener('change', () => {
+            paginaAtualLogs = 1; // Reseta para a primeira página ao filtrar por nova data
+            carregarLogs();
+        });
+    }
+
+    if (filtroLogResponsavel) {
+        filtroLogResponsavel.addEventListener('input', () => {
+            paginaAtualLogs = 1; // Reseta para a primeira página ao digitar um nome
+            carregarLogs();
+        });
+    }
+
     // Escutadores para atualizar listagem em tempo real e resetar página para 1
     if (filtroUserNome) filtroUserNome.addEventListener('input', () => { paginaAtualUsers = 1; carregarUsuarios(); });
     if (filtroUserApt)  filtroUserApt.addEventListener('input',  () => { paginaAtualUsers = 1; carregarUsuarios(); });
