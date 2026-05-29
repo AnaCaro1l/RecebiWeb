@@ -169,19 +169,36 @@ def listar_usuarios():
     if claims.get("perfil") != "Sindico":
         return jsonify({"erro": "Acesso negado."}), 403
 
-    status_query = request.args.get('status')
+    # Captura os filtros e a página atual enviados pelo JavaScript
+    pagina = request.args.get('page', 1, type=int)
+    nome_query = request.args.get('nome', '').strip()
+    apt_query = request.args.get('apt', '').strip()
+    perfil_query = request.args.get('perfil', '').strip()
+    status_query = request.args.get('status', 'Ambos').strip()
 
     try:
         query = Usuario.query
 
-        if status_query and status_query.lower() != "todos":
-            is_active_filter = (status_query.lower() == "ativo")
-            query = query.filter_by(is_active=is_active_filter)
+        if nome_query:
+            query = query.filter(Usuario.nome.ilike(f"%{nome_query}%"))
+        if apt_query:
+            query = query.filter(Usuario.apartamento.ilike(f"%{apt_query}%"))
+        if perfil_query:
+            query = query.filter(Usuario.perfil == perfil_query)
 
-        usuarios = query.order_by(Usuario.nome).all()
+        if status_query.lower() == "ativo":
+            query = query.filter(Usuario.is_active == True)
+        elif status_query.lower() == "inativo":
+            query = query.filter(Usuario.is_active == False)
+
+        # Ordena por nome
+        query = query.order_by(Usuario.nome)
+
+        # Aplica a paginação nativa limitando estritamente a 10 itens por página
+        paginacao = query.paginate(page=pagina, per_page=10, error_out=False)
+        
         resultado = []
-
-        for u in usuarios:
+        for u in paginacao.items:
             resultado.append({
                 "IdUsuario": u.id, 
                 "Nome": u.nome, 
@@ -191,10 +208,15 @@ def listar_usuarios():
                 "Status": "Ativo" if u.is_active else "Inativo"
             })
 
-        if not resultado:
-             return jsonify({"message": "Nenhum usuário encontrado."}), 200
-
-        return jsonify(resultado), 200
+        return jsonify({
+            "usuarios": resultado,
+            "paginacao": {
+                "pagina_atual": paginacao.page,
+                "total_paginas": paginacao.pages,
+                "tem_anterior": paginacao.has_prev,
+                "tem_proximo": paginacao.has_next
+            }
+        }), 200
 
     except Exception as ex:
         return jsonify({"message": "Erro ao listar usuários.", "error": str(ex)}), 500

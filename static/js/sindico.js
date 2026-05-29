@@ -20,12 +20,27 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- 3. TAB NAVIGATION ---
+    // --- 3. TAB NAVIGATION E CONFIGURAÇÃO DE FILTROS ---
     const menuUsuarios = document.getElementById('menu-usuarios');
     const menuLogs = document.getElementById('menu-logs');
     const tituloPagina = document.getElementById('titulo-pagina');
     const btnNovoUsuario = document.getElementById('btn-novo-usuario');
     const tabelaContainer = document.getElementById('tabela-container');
+
+    // Controle de Paginação e Filtros de Usuários (DECLARAÇÃO ÚNICA)
+    let paginaAtualUsers = 1;
+    
+    const containerFiltrosUser = document.getElementById('container-filtros-usuarios');
+    const filtroUserNome = document.getElementById('filtro-user-nome');
+    const filtroUserApt = document.getElementById('filtro-user-apt');
+    const filtroUserPerfil = document.getElementById('filtro-user-perfil');
+    const filtroUserStatus = document.getElementById('filtro-user-status');
+    const btnLimparUserFiltros = document.getElementById('btn-limpar-user-filtros');
+
+    const btnUserAnterior = document.getElementById('btn-user-anterior');
+    const btnUserProximo = document.getElementById('btn-user-proximo');
+    const textoPaginasUser = document.getElementById('texto-paginas-user');
+    const containerPaginacaoUser = document.getElementById('paginacao-usuarios-container');
 
     let currentTab = 'usuarios';
 
@@ -35,6 +50,8 @@ document.addEventListener('DOMContentLoaded', () => {
             mudarAbaAtiva(menuUsuarios, menuLogs);
             tituloPagina.textContent = 'Usuários do Sistema';
             btnNovoUsuario.classList.remove('hidden');
+            if (containerFiltrosUser) containerFiltrosUser.classList.remove('hidden');   
+            if (containerPaginacaoUser) containerPaginacaoUser.classList.remove('hidden'); 
             carregarUsuarios();
         });
 
@@ -43,6 +60,8 @@ document.addEventListener('DOMContentLoaded', () => {
             mudarAbaAtiva(menuLogs, menuUsuarios);
             tituloPagina.textContent = 'Logs de Auditoria';
             btnNovoUsuario.classList.add('hidden');
+            if (containerFiltrosUser) containerFiltrosUser.classList.add('hidden');   
+            if (containerPaginacaoUser) containerPaginacaoUser.classList.add('hidden'); 
             carregarLogs();
         });
     }
@@ -54,23 +73,70 @@ document.addEventListener('DOMContentLoaded', () => {
         abaInativa.classList.add('text-slate-600', 'hover:bg-slate-200');
     }
 
+    // Escutadores para atualizar listagem em tempo real e resetar página para 1
+    if (filtroUserNome) filtroUserNome.addEventListener('input', () => { paginaAtualUsers = 1; carregarUsuarios(); });
+    if (filtroUserApt)  filtroUserApt.addEventListener('input',  () => { paginaAtualUsers = 1; carregarUsuarios(); });
+    if (filtroUserPerfil) filtroUserPerfil.addEventListener('change', () => { paginaAtualUsers = 1; carregarUsuarios(); });
+    if (filtroUserStatus) filtroUserStatus.addEventListener('change', () => { paginaAtualUsers = 1; carregarUsuarios(); });
+
+    // Escutadores de Paginação
+    if (btnUserAnterior && btnUserProximo) {
+        btnUserAnterior.addEventListener('click', () => {
+            if (paginaAtualUsers > 1) {
+                paginaAtualUsers--;
+                carregarUsuarios();
+            }
+        });
+
+        btnUserProximo.addEventListener('click', () => {
+            paginaAtualUsers++;
+            carregarUsuarios();
+        });
+    }
+
+    if (btnLimparUserFiltros) {
+        btnLimparUserFiltros.addEventListener('click', () => {
+            filtroUserNome.value = '';
+            filtroUserApt.value = '';
+            filtroUserPerfil.value = '';
+            filtroUserStatus.value = 'Ambos';
+            paginaAtualUsers = 1;
+            carregarUsuarios();
+        });
+    }
+    
     // --- 4. API CALLS ---
     async function carregarUsuarios() {
         tabelaContainer.innerHTML = '<div class="p-6 text-center text-slate-500">Carregando usuários...</div>';
         try {
             const token = Auth.getToken();
-            const response = await fetch(`${API_BASE_URL}/sindico/usuarios`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+            
+            const nome = filtroUserNome ? filtroUserNome.value.trim() : '';
+            const apt = filtroUserApt ? filtroUserApt.value.trim() : '';
+            const perfil = filtroUserPerfil ? filtroUserPerfil.value : '';
+            const status = filtroUserStatus ? filtroUserStatus.value : 'Ambos';
+
+            const url = `${API_BASE_URL}/sindico/usuarios?page=${paginaAtualUsers}&nome=${encodeURIComponent(nome)}&apt=${encodeURIComponent(apt)}&perfil=${perfil}&status=${status}`;
+
+            const response = await fetch(url, {
+                headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await response.json();
 
             if (!response.ok) throw new Error(data.message || 'Erro ao carregar usuários.');
 
-            if (!Array.isArray(data) || data.length === 0) {
-                tabelaContainer.innerHTML = '<div class="p-6 text-center text-slate-500">Nenhum usuário cadastrado.</div>';
+            if (!data.usuarios || data.usuarios.length === 0) {
+                tabelaContainer.innerHTML = '<div class="p-6 text-center text-slate-500">Nenhum usuário cadastrado ou correspondente.</div>';
+                if (containerPaginacaoUser) containerPaginacaoUser.classList.add('hidden');
                 return;
+            }
+
+            if (containerPaginacaoUser) containerPaginacaoUser.classList.remove('hidden');
+            if (textoPaginasUser && btnUserAnterior && btnUserProximo) {
+                textoPaginasUser.textContent = `Página ${data.paginacao.pagina_atual} de ${data.paginacao.total_paginas}`;
+                btnUserAnterior.disabled = !data.paginacao.tem_anterior;
+                btnUserProximo.disabled = !data.paginacao.tem_proximo;
+                paginaAtualUsers = data.paginacao.pagina_atual;
             }
 
             let html = `
@@ -88,7 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <tbody class="divide-y divide-slate-100 text-sm">
             `;
 
-            data.forEach(u => {
+            data.usuarios.forEach(u => {
                 const statusBadge = u.Status === 'Ativo'
                     ? '<span class="px-2 py-1 text-xs font-semibold text-emerald-800 bg-emerald-100 rounded-full">Ativo</span>'
                     : '<span class="px-2 py-1 text-xs font-semibold text-rose-800 bg-rose-100 rounded-full">Inativo</span>';
@@ -123,9 +189,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const token = Auth.getToken();
             const response = await fetch(`${API_BASE_URL}/sindico/logs`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await response.json();
 
@@ -205,12 +269,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function abrirModal(id = null, nome = '', email = '', tipoUsuario = 'Morador', apartamento = '') {
-        // Remove existing modal if any
         const existing = document.getElementById('user-modal');
         if (existing) existing.remove();
 
         const modalHtml = `
-            <div id="user-modal" class="fixed inset-0 bg-slate-900 bg-opacity-50 flex items-center justify-center p-4 z-50 animate-fade-in">
+            <div id="user-modal" class="fixed inset-0 bg-slate-900 bg-opacity-50 flex items-center justify-center p-4 z-50">
                 <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
                     <div class="px-6 py-4 bg-slate-900 text-white flex justify-between items-center">
                         <h3 class="text-lg font-bold">${id ? 'Editar Usuário' : 'Novo Usuário'}</h3>
@@ -267,9 +330,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 apartamento: document.getElementById('modal-apartamento').value.trim() || null
             };
 
-            const url = id
-                ? `${API_BASE_URL}/sindico/atualizar/${id}`
-                : `${API_BASE_URL}/sindico/criar`;
+            const url = id ? `${API_BASE_URL}/sindico/atualizar/${id}` : `${API_BASE_URL}/sindico/criar`;
 
             if (!id) {
                 bodyData.senha = document.getElementById('modal-senha').value.trim();
@@ -298,6 +359,5 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Default load
     carregarUsuarios();
 });
