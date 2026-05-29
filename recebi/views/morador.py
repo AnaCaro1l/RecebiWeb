@@ -79,7 +79,11 @@ def consultar_minhas_encomendas():
         return jsonify({"erro": "Acesso negado. Apenas moradores."}), 403
 
     morador_id = int(get_jwt_identity())
-    status_query = request.args.get('status')
+    
+    # Captura os parâmetros enviados pelo JavaScript
+    pagina = request.args.get('page', 1, type=int)
+    status_query = request.args.get('status', 'Ambos').strip()
+    data_query = request.args.get('data', '').strip()
 
     try:
         morador_atual = db.session.get(Usuario, morador_id)
@@ -88,13 +92,25 @@ def consultar_minhas_encomendas():
 
         query = Encomenda.query.filter_by(morador_id=morador_id)
 
-        if status_query and status_query.lower() != "todas":
+        # Filtro por Status (Pendente / Retirada)
+        if status_query and status_query.lower() != "ambos":
              query = query.filter(Encomenda.status.ilike(status_query))
 
-        encomendas = query.order_by(Encomenda.data_registro.desc()).all()
+        if data_query:
+            try:
+                data_objeto = datetime.strptime(data_query, '%Y-%m-%d').date()
+                query = query.filter(db.func.date(Encomenda.data_registro) == data_objeto)
+            except ValueError:
+                pass
+
+        # Ordenação por encomendas mais recentes
+        query = query.order_by(Encomenda.data_registro.desc())
+
+        # Limita de forma nativa a exibição em no máximo 10 registros por página
+        paginacao = query.paginate(page=pagina, per_page=10, error_out=False)
 
         resultado_formatado = []
-        for e in encomendas:
+        for e in paginacao.items:
             log_registro = LogAuditoria.query.filter_by(
                 registro_id=e.id, 
                 tabela_afetada='encomendas',
@@ -118,10 +134,15 @@ def consultar_minhas_encomendas():
                 "Porteiro": nome_porteiro
             })
 
-        if not resultado_formatado:
-            return jsonify({"message": "Nenhuma encomenda encontrada."}), 200
-
-        return jsonify(resultado_formatado), 200
+        return jsonify({
+            "encomendas": resultado_formatado,
+            "paginacao": {
+                "pagina_atual": paginacao.page,
+                "total_paginas": paginacao.pages,
+                "tem_anterior": paginacao.has_prev,
+                "tem_proximo": paginacao.has_next
+            }
+        }), 200
 
     except Exception as ex:
         print(f"Erro em ConsultarMinhasEncomendas: {str(ex)}")
