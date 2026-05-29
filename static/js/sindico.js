@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const tabelaContainer = document.getElementById('tabela-container');
 
     // Controle de Paginação e Filtros de Usuários (DECLARAÇÃO ÚNICA)
-    let paginaAtualUsers = 1;
+let paginaAtualUsers = 1;
     
     const containerFiltrosUser = document.getElementById('container-filtros-usuarios');
     const filtroUserNome = document.getElementById('filtro-user-nome');
@@ -42,7 +42,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const textoPaginasUser = document.getElementById('texto-paginas-user');
     const containerPaginacaoUser = document.getElementById('paginacao-usuarios-container');
 
+    // NOVAS DECLARAÇÕES: Filtros da aba de Logs de Auditoria
+    const containerFiltrosLog = document.getElementById('container-filtros-logs');
+    const filtroLogData = document.getElementById('filtro-log-data');
+    const filtroLogResponsavel = document.getElementById('filtro-log-responsavel');
+    const btnLimparLogFiltros = document.getElementById('btn-limpar-log-filtros');
+
     let currentTab = 'usuarios';
+
+    // Máscara de fuso horário rígida para cravar o padrão brasileiro
+    const opcoesDataBR = {
+        timeZone: 'America/Sao_Paulo',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    };
 
     if (menuUsuarios && menuLogs) {
         menuUsuarios.addEventListener('click', () => {
@@ -52,6 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
             btnNovoUsuario.classList.remove('hidden');
             if (containerFiltrosUser) containerFiltrosUser.classList.remove('hidden');   
             if (containerPaginacaoUser) containerPaginacaoUser.classList.remove('hidden'); 
+            if (containerFiltrosLog) containerFiltrosLog.classList.add('hidden'); // Esconde filtros do log
             carregarUsuarios();
         });
 
@@ -62,6 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
             btnNovoUsuario.classList.add('hidden');
             if (containerFiltrosUser) containerFiltrosUser.classList.add('hidden');   
             if (containerPaginacaoUser) containerPaginacaoUser.classList.add('hidden'); 
+            if (containerFiltrosLog) containerFiltrosLog.classList.remove('hidden'); // Exibe filtros do log
             carregarLogs();
         });
     }
@@ -71,6 +90,17 @@ document.addEventListener('DOMContentLoaded', () => {
         abaAtiva.classList.remove('text-slate-600', 'hover:bg-slate-200');
         abaInativa.classList.remove('bg-[#4a90e2]', 'text-white');
         abaInativa.classList.add('text-slate-600', 'hover:bg-slate-200');
+    }
+
+    if (filtroLogData) filtroLogData.addEventListener('change', carregarLogs);
+    if (filtroLogResponsavel) filtroLogResponsavel.addEventListener('input', carregarLogs);
+
+    if (btnLimparLogFiltros) {
+        btnLimparLogFiltros.addEventListener('click', () => {
+            filtroLogData.value = '';
+            filtroLogResponsavel.value = '';
+            carregarLogs();
+        });
     }
 
     // Escutadores para atualizar listagem em tempo real e resetar página para 1
@@ -184,11 +214,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    async function carregarLogs() {
+async function carregarLogs() {
         tabelaContainer.innerHTML = '<div class="p-6 text-center text-slate-500">Carregando logs de auditoria...</div>';
         try {
             const token = Auth.getToken();
-            const response = await fetch(`${API_BASE_URL}/sindico/logs`, {
+            
+            const dataVal = filtroLogData ? filtroLogData.value : '';
+            const respVal = filtroLogResponsavel ? filtroLogResponsavel.value.trim() : '';
+
+            // Envia os dados capturados nas caixas superiores para a rota filtrada do Flask
+            const url = `${API_BASE_URL}/sindico/logs?data=${dataVal}&responsavel=${encodeURIComponent(respVal)}`;
+
+            const response = await fetch(url, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await response.json();
@@ -196,39 +233,77 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error(data.message || 'Erro ao carregar logs.');
 
             if (!Array.isArray(data) || data.length === 0) {
-                tabelaContainer.innerHTML = '<div class="p-6 text-center text-slate-500">Nenhum registro de log encontrado.</div>';
+                tabelaContainer.innerHTML = '<div class="p-6 text-center text-slate-500">Nenhum registro de log encontrado para os filtros aplicados.</div>';
                 return;
             }
 
+            // Inicia o cabeçalho estrutural limitado apenas a Data/Hora, Responsável e Ações (Seta)
             let html = `
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-slate-50 text-slate-600 text-xs font-semibold uppercase border-b border-slate-200">
                             <th class="p-4">Data/Hora</th>
                             <th class="p-4">Responsável</th>
-                            <th class="p-4">Ação</th>
-                            <th class="p-4">Detalhes</th>
+                            <th class="p-4 text-center w-24">Ações</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100 text-xs text-slate-600">
+                    <tbody class="divide-y divide-slate-100 text-sm">
             `;
 
             data.forEach(log => {
-                const dateFormatted = new Date(log.DataHora).toLocaleString('pt-BR');
-                const detailsText = log.Detalhes ? JSON.stringify(log.Detalhes) : '-';
+                // Formatação blindada no padrão DD/MM/AAAA HH:MM:SS
+                const dateFormatted = log.DataHora ? new Date(log.DataHora).toLocaleString('pt-BR', opcoesDataBR) : 'N/A';
 
                 html += `
-                    <tr class="hover:bg-slate-50 transition-colors">
+                    <tr class="hover:bg-slate-50 transition-colors cursor-pointer linha-log" data-id="${log.IdHistorico}">
                         <td class="p-4 whitespace-nowrap font-medium text-slate-900">${dateFormatted}</td>
                         <td class="p-4 font-semibold text-slate-700">${log.Usuario}</td>
-                        <td class="p-4 text-slate-900 font-medium">${log.Acao}</td>
-                        <td class="p-4 max-w-xs truncate" title='${detailsText}'>${detailsText}</td>
+                        <td class="p-4 text-center">
+                            <span class="inline-block transition-transform duration-200 text-slate-400 select-none text-xs" 
+                                  id="seta-log-${log.IdHistorico}">▶</span>
+                        </td>
+                    </tr>
+                    
+                    <tr id="detalhe-log-${log.IdHistorico}" class="hidden bg-slate-50/60 border-b border-slate-200">
+                        <td colspan="3" class="px-12 py-4 text-slate-600 bg-slate-50/90">
+                            <div class="border-l-2 border-[#4a90e2] pl-4 py-1 text-xs space-y-2">
+                                <p class="text-slate-400 font-medium uppercase tracking-wider mb-0.5">Contexto Histórico do Log</p>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <p class="text-slate-500 mb-1"><strong class="text-slate-700">Ação Executada:</strong> ${log.Acao}</p>
+                                        <p class="text-slate-500 mb-1"><strong class="text-slate-700">Encomenda Relacionada:</strong> ${log.EncomendaDescricao || 'N/A'}</p>
+                                        <p class="text-slate-500"><strong class="text-slate-700">Apt Vinculado:</strong> ${log.EncomendaApartamento || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-slate-400 font-medium uppercase tracking-wider mb-0.5">Snapshot dos Dados Posterior (JSON)</p>
+                                        <pre class="bg-white p-2 rounded text-[11px] font-mono border border-slate-200 text-slate-600 max-h-24 overflow-y-auto mt-1">${log.Detalhes ? JSON.stringify(log.Detalhes, null, 2) : 'Nenhum snapshot gerado.'}</pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
                     </tr>
                 `;
             });
 
             html += '</tbody></table>';
             tabelaContainer.innerHTML = html;
+
+            // Ativa o evento de clique expansível nas sublinhas de histórico
+            document.querySelectorAll('.linha-log').forEach(linha => {
+                linha.addEventListener('click', () => {
+                    const id = linha.getAttribute('data-id');
+                    const detalhe = document.getElementById(`detalhe-log-${id}`);
+                    const seta = document.getElementById(`seta-log-${id}`);
+                    
+                    if (detalhe.classList.contains('hidden')) {
+                        detalhe.classList.remove('hidden');
+                        if (seta) seta.style.transform = 'rotate(90deg)'; // Rotaciona a seta para baixo
+                    } else {
+                        detalhe.classList.add('hidden');
+                        if (seta) seta.style.transform = 'rotate(0deg)';  // Volta a seta para frente
+                    }
+                });
+            });
 
         } catch (error) {
             tabelaContainer.innerHTML = `<div class="p-6 text-center text-rose-500 font-medium">${error.message}</div>`;

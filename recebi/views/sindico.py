@@ -254,8 +254,27 @@ def consultar_logs():
     if claims.get("perfil") != "Sindico":
         return jsonify({"erro": "Acesso negado."}), 403
 
+    # Captura os parâmetros de filtros enviados pelo JavaScript
+    data_param = request.args.get('data', '').strip()
+    responsavel_param = request.args.get('responsavel', '').strip()
+
     try:
-        historicos = LogAuditoria.query.order_by(LogAuditoria.data_acao.desc()).all()
+        # Base da consulta fazendo um JOIN para podermos pesquisar textualmente pelo nome do criador do log
+        query = LogAuditoria.query.join(Usuario, LogAuditoria.usuario_responsavel_id == Usuario.id)
+
+        # Filtro por Data (ignora a hora no cruzamento de dados)
+        if data_param:
+            try:
+                data_objeto = datetime.strptime(data_param, '%Y-%m-%d').date()
+                query = query.filter(db.func.date(LogAuditoria.data_acao) == data_objeto)
+            except ValueError:
+                pass
+
+        # Filtro por Nome do Responsável (parcial e sem distinção de maiúsculas/minúsculas)
+        if responsavel_param:
+            query = query.filter(Usuario.nome.ilike(f"%{responsavel_param}%"))
+
+        historicos = query.order_by(LogAuditoria.data_acao.desc()).all()
         resultado = []
 
         for h in historicos:
